@@ -1,0 +1,45 @@
+#
+# This playbook configures the kernel and boot settings
+#
+
+- hosts: ampis
+  remote_user: root
+  tasks:
+    - name: Get root PARTUUID
+      command: blkid /dev/mmcblk0p2 -o value -s PARTUUID
+      register: result
+    - name: set root_partuuid variable
+      set_fact:
+        root_partuuid: "{{ result.stdout }}"
+    - debug:
+        msg: root PARTUUID={{ root_partuuid }}
+    - fail:
+        msg: "Could not determine root PARTUUID"
+      when: not root_partuuid
+    - name: Install cmdline.txt
+      template: src=boot/cmdline.txt dest=/boot/cmdline.txt
+      notify: reboot
+    - name: Install config.txt
+      template: src=boot/config.txt dest=/boot/config.txt
+      notify: reboot
+  handlers:
+    - name: reboot
+      changed_when: "true"
+      debug: msg='trigger machine reboot sequence'
+      notify:
+        - initiate_reboot
+        - wait_for_restart
+    - name: initiate_reboot
+      shell: sleep 2 && shutdown -r now "Ansible boot update triggered"
+      async: 1
+      poll: 0
+      ignore_errors: true
+    - name: wait_for_restart
+      wait_for:
+        port: 22
+        host: '{{ (ansible_ssh_host|default(ansible_host))|default(inventory_hostname) }}'
+        delay: 10
+        timeout: 300
+      connection: local
+
+# vi: sw=2 sts=2 et filetype=yaml
