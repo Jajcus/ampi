@@ -1,0 +1,103 @@
+#
+# This playbook configures the kernel and boot settings
+#
+
+- hosts: ampis
+  remote_user: root
+  tasks:
+    - name: Set timezone
+      command: timedatectl set-timezone {{ timezone | default("Europe/Warsaw") }}
+    - name: Update APT cache
+      apt:
+        update_cache: yes
+    - name: Install packages
+      apt:
+        name:
+          - jackd1
+          - i3
+          - locales-all
+          - nodm
+          - xserver-xorg-video-fbdev
+          - mesa-utils
+          - mesa-utils-extra
+          - xserver-xorg-input-evdev
+          - guitarix
+          - guitarix-lv2
+          - rtirq-init
+        state: latest
+    - name: Add 'amp' user
+      user:
+        name: amp
+        shell: /bin/bash
+        state: present
+        groups: audio
+        append: yes
+    - name: Set authorized key for user amp copying it from current user
+      authorized_key:
+        user: amp
+        state: present
+        key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
+    - name: Configure /etc/defaults
+      template: src=etc/default/{{ item }} dest=/etc/default/{{ item }}
+      with_items:
+        - rtirq
+        - nodm
+        - locale
+    - name: Configure sound drivers
+      template: src=etc/modprobe.d/snd.conf dest=/etc/modprobe.d/snd.conf
+      notify:
+        - reload snd
+    - name: Add custom systemd services
+      template: src=etc/systemd/system/{{ item }} dest=/etc/systemd/system/{{ item }}
+      with_items:
+        - unbind-eth.service
+        - set-governor.service
+    - name: Reload systemd config
+      systemd: daemon_reload=yes
+    - name: Disable/stop uneeded services
+      systemd: enabled=no state=stopped name={{ item }}
+      with_items:
+        - ModemManager
+        - bluetooth
+        - hciuart
+        - raspi-config
+        - triggerhappy
+    - name: Enable/start required services
+      systemd: enabled=yes state=started name={{ item }}
+      with_items:
+        - unbind-eth.service
+        - set-governor.service
+    - name: make amp directories
+      file:
+        name: "{{ item }}"
+        owner: amp
+        group: amp
+        state: directory
+      with_items:
+        - /home/amp/.config
+        - /home/amp/.config/i3
+        - /home/amp/.config/i3status
+    - name: configure i3
+      template: src=amp/i3/config dest=/home/amp/.config/i3/config owner=amp group=amp
+      notify: "restart user session"
+    - name: configure i3status
+      template: src=amp/i3status/config dest=/home/amp/.config/i3status/config owner=amp group=amp
+      notify: "restart user session"
+    - name: configure jackd
+      template: src=amp/jackdrc dest=/home/amp/.jackdrc owner=amp group=amp
+      notify: "restart user session"
+
+  handlers:
+    - name: reload snd
+      shell: "modprobe -r snd-usb-audio ; modprobe snd-usb-audio || :"
+    - name: stop X11 session
+      systemd: name=nodm.service state=stopped
+      listen: "restart user session"
+    - name: killa jackd
+      shell: "killall -9 jackd || :"
+      listen: "restart user session"
+    - name: start X11 session
+      systemd: name=nodm.service state=started
+      listen: "restart user session"
+
+# vi: sw=2 sts=2 et filetype=yaml
