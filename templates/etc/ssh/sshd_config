@@ -1,0 +1,16 @@
+{{ ansible_managed | comment }}
+
+PermitRootLogin without-password
+PasswordAuthentication no
+PermitEmptyPasswords no
+ChallengeResponseAuthentication no
+KerberosAuthentication no
+GSSAPIAuthentication no
+
+UsePAM yes
+X11Forwarding yes
+PrintMotd no
+
+AcceptEnv LANG LC_*
+
+Subsystem	sftp	/usr/lib/openssh/sftp-server

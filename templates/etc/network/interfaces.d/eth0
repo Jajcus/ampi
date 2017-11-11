@@ -1,0 +1,4 @@
+{{ ansible_managed | comment }}
+
+iface eth0 inet dhcp
+iface eth0 inet6 auto

@@ -1,0 +1,65 @@
+#
+# This playbok will set up wifi and ssh so others can be run via wifi
+#
+
+- hosts: ampis
+  vars:
+    ansible_host: "{{ eth_ip }}"
+  remote_user: pi
+  tasks:
+    - name: Set authorized key for user pi copying it from current user
+      authorized_key:
+        user: pi
+        state: present
+        key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
+    - name: Set authorized key for user root copying it from current user
+      authorized_key:
+        user: pi
+        state: present
+        key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
+      become: yes
+    - name: install sshd config
+      template: src=etc/ssh/sshd_config dest=/etc/ssh/sshd_config
+      become: yes
+      notify: "restart sshd"
+    - name: check ssh host keys
+      stat: path=/etc/ssh/ssh_host_rsa_key
+      become: yes
+      register: st
+    - name: make ssh host keys
+      command: service regenerate_ssh_host_keys restart
+      when: not st.stat.exists or not st.stat.size > 0
+      become: yes
+      notify: "restart sshd"
+    - name: enable/start sshd service
+      service: name=ssh enabled=yes state=started
+      notify: "restart sshd"
+      become: yes
+    - name: configure eth0 interface
+      template: src=etc/network/interfaces.d/eth0 dest=/etc/network/interfaces.d/eth0
+      notify: "restart eth0"
+      become: yes
+    - name: configure wlan0 interface
+      template: src=etc/network/interfaces.d/wlan0 dest=/etc/network/interfaces.d/wlan0
+      notify: "restart wlan0"
+      become: yes
+    - name: configure wifi network
+      template: src=etc/wpa_supplicant/wpa_supplicant.conf dest=/etc/wpa_supplicant/wpa_supplicant.conf
+      notify: "reload wpa"
+      become: yes
+
+  handlers:
+    - name: restart sshd
+      service: name=sshd state=restarted
+      become: yes
+    - name: restart eth0
+      shell: "ifdown eth0; sleep 1; ifup eth0"
+      become: yes
+    - name: restart wlan0
+      shell: "ifdown eth0; sleep 1; ifup eth0"
+      become: yes
+    - name: reload wpa
+      shell: wpa_cli reconfigure
+      become: yes
+
+# vi: sw=2 sts=2 et filetype=yaml

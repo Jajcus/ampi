@@ -1,0 +1,14 @@
+all:
+    children:
+        ampis:
+            hosts:
+                my_amp:
+                    eth_ip: 10.0.0.1
+                    wifi_ip: 10.0.0.2
+                    ansible_host: 10.0.0.2
+                    country: GB
+            vars:
+                wifi_ssid: wifi_name
+                wifi_psk: secret_password
+
+# vi: sw=4 sts=4 et filetype=yaml
