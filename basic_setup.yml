@@ -37,15 +37,18 @@
       become: yes
     - name: configure eth0 interface
       template: src=etc/network/interfaces.d/eth0 dest=/etc/network/interfaces.d/eth0
-      notify: "restart eth0"
+      notify:
+        - restart eth0
       become: yes
     - name: configure wlan0 interface
       template: src=etc/network/interfaces.d/wlan0 dest=/etc/network/interfaces.d/wlan0
-      notify: "restart wlan0"
+      notify:
+        - restart wlan0
       become: yes
     - name: configure wifi network
       template: src=etc/wpa_supplicant/wpa_supplicant.conf dest=/etc/wpa_supplicant/wpa_supplicant.conf
-      notify: "reload wpa"
+      notify:
+        - restart dhcpcd
       become: yes
 
   handlers:
@@ -58,8 +61,8 @@
     - name: restart wlan0
       shell: "ifdown eth0; sleep 1; ifup eth0"
       become: yes
-    - name: reload wpa
-      shell: wpa_cli reconfigure
+    - name: restart dhcpcd
+      service: name=dhcpcd state=restarted
       become: yes
 
 # vi: sw=2 sts=2 et filetype=yaml
