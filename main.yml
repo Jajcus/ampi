@@ -13,7 +13,8 @@
     - name: Install packages
       apt:
         name:
-          - jackd1
+          - jackd2
+          - dbus-x11
           - i3
           - locales-all
           - nodm
@@ -62,6 +63,9 @@
         - hciuart
         - raspi-config
         - triggerhappy
+    - name: Set resource limits for real-time
+      template: src=etc/security/limits.d/audio.conf dest=/etc/security/limits.d/audio.conf
+      notify: "restart user session"
     - name: Enable/start required services
       systemd: enabled=yes state=started name={{ item }}
       with_items:
