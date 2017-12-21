@@ -1,5 +1,5 @@
 *~
-inventory.yml
-ansible.cfg
-*.retry
+/ansible/*.retry
+/ansible/ansible.cfg
+/ansible/inventory.yml
 /kernel-bin

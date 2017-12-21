@@ -7,15 +7,15 @@
   tasks:
     - name: Install kernel modules
       synchronize:
-        src: kernel-bin/lib/modules/
+        src: ../kernel-bin/lib/modules/
         dest: /lib/modules/
     - name: Install kernel firmware files
       synchronize:
-        src: kernel-bin/lib/firmware/
+        src: ../kernel-bin/lib/firmware/
         dest: /lib/firmware/
     - name: Install kernel boot files
       synchronize:
-        src: kernel-bin/boot/
+        src: ../kernel-bin/boot/
         dest: /boot/
         archive: no
         times: yes
