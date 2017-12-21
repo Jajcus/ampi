@@ -1,6 +1,6 @@
 #!/bin/sh -ex
 
-PATH=$PATH:$PWD/rpi-tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin
+PATH="$PATH:$PWD/rpi-tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin"
 
 DESTDIR="$PWD/kernel-bin"
 
