@@ -2,3 +2,4 @@
 inventory.yml
 ansible.cfg
 *.retry
+/kernel-bin

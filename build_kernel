@@ -1,0 +1,21 @@
+#!/bin/sh -ex
+
+PATH=$PATH:$PWD/rpi-tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin
+
+DESTDIR="$PWD/kernel-bin"
+
+cp kernel.config kernel/.config
+
+cd kernel
+
+KERNEL=kernel7
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- oldconfig
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- zImage modules dtbs
+
+[ -d "$DESTDIR" ] && rm -rf "$DESTDIR"
+mkdir -p "$DESTDIR"/boot/overlays
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- INSTALL_MOD_PATH="$DESTDIR" modules_install
+cp arch/arm/boot/zImage "$DESTDIR"/boot/$KERNEL.img
+cp arch/arm/boot/dts/*.dtb "$DESTDIR"/boot/
+cp arch/arm/boot/dts/overlays/*.dtb* "$DESTDIR"/boot/overlays/
+cp arch/arm/boot/dts/overlays/README "$DESTDIR"/boot/overlays/

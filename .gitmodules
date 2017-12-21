@@ -1,0 +1,6 @@
+[submodule "kernel"]
+	path = kernel
+	url = https://github.com/Jajcus/rpi-kernel-rt.git
+[submodule "rpi-tools"]
+	path = rpi-tools
+	url = https://github.com/raspberrypi/tools
