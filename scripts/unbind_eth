@@ -1,0 +1,27 @@
+#!/bin/sh
+
+# un-bind eth0 from USB bus when not connected to anything
+# won't use precious USB bandwidth causing latency to USB audio
+
+[ -d /sys/class/net/eth0 ] || exit 0
+
+if [ "$(cat /sys/class/net/eth0/operstate)" != "up" ] ; then
+	WAS_UP=no
+	/sbin/ip link set eth0 up
+fi
+
+sleep 2
+
+if [ "$(cat /sys/class/net/eth0/carrier)" = "1" ] ; then
+	echo "eth0 carrier detected"
+	RESULT=1
+else
+	echo 1-1.1:1.0 > /sys/bus/usb/drivers/smsc95xx/unbind
+	RESULT=0
+fi
+
+if [ "$WAS_UP" = "no" ] ; then
+	/sbin/ip link set eth0 down 2>/dev/null || :
+fi
+
+exit $RESULT

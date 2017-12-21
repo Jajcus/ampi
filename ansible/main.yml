@@ -48,6 +48,14 @@
       template: src=etc/modprobe.d/snd.conf dest=/etc/modprobe.d/snd.conf
       notify:
         - reload snd
+    - name: Install scripts
+      copy:
+        src: "{{ playbook_dir }}/../scripts/{{ item }}"
+        dest: /usr/local/bin/{{ item }}
+        mode: 0755
+      with_items:
+        - bind_eth
+        - unbind_eth
     - name: Add custom systemd services
       template: src=etc/systemd/system/{{ item }} dest=/etc/systemd/system/{{ item }}
       with_items:

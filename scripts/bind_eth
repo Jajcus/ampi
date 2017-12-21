@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# re-bind eth0 to the USB bus, so it is available again
+
+echo 1-1.1:1.0 > /sys/bus/usb/drivers/smsc95xx/bind
