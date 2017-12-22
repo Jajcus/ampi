@@ -10,5 +10,6 @@ all:
             vars:
                 wifi_ssid: wifi_name
                 wifi_psk: secret_password
+                vnc_password: another_secret_password
 
 # vi: sw=4 sts=4 et filetype=yaml

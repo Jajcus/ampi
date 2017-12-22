@@ -1,0 +1,9 @@
+{{ ansible_managed | comment }}
+
+display :0
+rfbport 5900
+forever
+avahi
+nolookup
+ssl SAVE_NOPROMPT
+vencrypt nodh:only

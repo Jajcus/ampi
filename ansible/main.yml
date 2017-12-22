@@ -6,11 +6,14 @@
   remote_user: root
   tasks:
     - name: Set timezone
+      tags: time
       command: timedatectl set-timezone {{ timezone | default("Europe/Warsaw") }}
     - name: Update APT cache
+      tags: apt
       apt:
         update_cache: yes
     - name: Install packages
+      tags: apt
       apt:
         name:
           - jackd2
@@ -25,8 +28,10 @@
           - guitarix
           - guitarix-lv2
           - rtirq-init
+          - x11vnc
         state: latest
     - name: Add 'amp' user
+      tags: amp_user
       user:
         name: amp
         shell: /bin/bash
@@ -34,21 +39,25 @@
         groups: audio
         append: yes
     - name: Set authorized key for user amp copying it from current user
+      tags: amp_user
       authorized_key:
         user: amp
         state: present
         key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
     - name: Configure /etc/defaults
+      tags: etc
       template: src=etc/default/{{ item }} dest=/etc/default/{{ item }}
       with_items:
         - rtirq
         - nodm
         - locale
     - name: Configure sound drivers
+      tags: etc
       template: src=etc/modprobe.d/snd.conf dest=/etc/modprobe.d/snd.conf
       notify:
         - reload snd
     - name: Install scripts
+      tags: scripts
       copy:
         src: "{{ playbook_dir }}/../scripts/{{ item }}"
         dest: /usr/local/bin/{{ item }}
@@ -57,13 +66,16 @@
         - bind_eth
         - unbind_eth
     - name: Add custom systemd services
+      tags: etc, systemd
       template: src=etc/systemd/system/{{ item }} dest=/etc/systemd/system/{{ item }}
       with_items:
         - unbind-eth.service
         - set-governor.service
     - name: Reload systemd config
+      tags: systemd
       systemd: daemon_reload=yes
     - name: Disable/stop uneeded services
+      tags: systemd
       systemd: enabled=no state=stopped name={{ item }}
       with_items:
         - ModemManager
@@ -72,14 +84,17 @@
         - raspi-config
         - triggerhappy
     - name: Set resource limits for real-time
+      tags: etc
       template: src=etc/security/limits.d/audio.conf dest=/etc/security/limits.d/audio.conf
       notify: "restart user session"
     - name: Enable/start required services
+      tags: systemd
       systemd: enabled=yes state=started name={{ item }}
       with_items:
         - unbind-eth.service
         - set-governor.service
     - name: make amp directories
+      tags: amp_user,i3,vnc
       file:
         name: "{{ item }}"
         owner: amp
@@ -89,15 +104,31 @@
         - /home/amp/.config
         - /home/amp/.config/i3
         - /home/amp/.config/i3status
+        - /home/amp/.vnc
     - name: configure i3
+      tags: amp_user,i3
       template: src=amp/i3/config dest=/home/amp/.config/i3/config owner=amp group=amp
       notify: "restart user session"
     - name: configure i3status
+      tags: amp_user,i3
       template: src=amp/i3status/config dest=/home/amp/.config/i3status/config owner=amp group=amp
       notify: "restart user session"
     - name: configure jackd
+      tags: amp_user,jack
       template: src=amp/jackdrc dest=/home/amp/.jackdrc owner=amp group=amp
       notify: "restart user session"
+    - name: configure x11vnc
+      tags: amp_user,vnc
+      template:
+        src: amp/x11vncrc
+        dest: /home/amp/.x11vncrc
+        owner: amp
+        group: amp
+    - name: set x11vnc password
+      tags: amp_user,vnc
+      become: yes
+      become_user: amp
+      command: x11vnc -storepasswd ampik ~/.vnc/passwd
 
   handlers:
     - name: reload snd
