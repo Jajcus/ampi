@@ -1,5 +1,7 @@
+*.pyc
 *~
 /ansible/*.retry
 /ansible/ansible.cfg
 /ansible/inventory.yml
 /kernel-bin
+__pycache__

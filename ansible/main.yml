@@ -29,7 +29,16 @@
           - guitarix-lv2
           - rtirq-init
           - x11vnc
+          - python3-gi
+          - python3-pyudev
+          - python3-jack-client
+          - python3-pip
+          - libgtk-3-0
+          - gir1.2-gtk-3.0
+          - libgudev-1.0-0
+          - gir1.2-gudev-1.0
         state: latest
+      notify: "restart user session"
     - name: Add 'amp' user
       tags: amp_user
       user:
@@ -65,6 +74,22 @@
       with_items:
         - bind_eth
         - unbind_eth
+    - name: Install the Ampi App
+      tags: app
+      synchronize:
+        src: "{{ playbook_dir }}/../ampi_app/"
+        dest: /home/amp/ampi_app/
+        archive: no
+        recursive: yes
+        links: yes
+        perms: yes
+        times: yes
+        rsync_opts:
+          - "--exclude=*~"
+          - "--exclude=__pycache__"
+          - "--exclude=*.pyc"
+          - "--exclude=.*"
+      notify: "restart user session"
     - name: Add custom systemd services
       tags: etc, systemd
       template: src=etc/systemd/system/{{ item }} dest=/etc/systemd/system/{{ item }}
@@ -112,10 +137,6 @@
     - name: configure i3status
       tags: amp_user,i3
       template: src=amp/i3status/config dest=/home/amp/.config/i3status/config owner=amp group=amp
-      notify: "restart user session"
-    - name: configure jackd
-      tags: amp_user,jack
-      template: src=amp/jackdrc dest=/home/amp/.jackdrc owner=amp group=amp
       notify: "restart user session"
     - name: configure x11vnc
       tags: amp_user,vnc
