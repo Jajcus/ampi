@@ -8,8 +8,11 @@ all:
                     ansible_host: 10.0.0.2
                     country: GB
             vars:
-                wifi_ssid: wifi_name
-                wifi_psk: secret_password
+                wifi_client:
+                    - ssid: wifi_name
+                      psk: secret_password
+                    - ssid: wifi_name2
+                      psk: secret_password2
                 vnc_password: another_secret_password
 
 # vi: sw=4 sts=4 et filetype=yaml

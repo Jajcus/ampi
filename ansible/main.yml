@@ -39,6 +39,10 @@
           - gir1.2-gudev-1.0
         state: latest
       notify: "restart user session"
+    - name: disable dhcpcd management of wpa_supplicant
+      file:
+        path: /lib/dhcpcd/dhcpcd-hooks/10-wpa_supplicant
+        state: absent
     - name: Add 'amp' user
       tags: amp_user
       user:
