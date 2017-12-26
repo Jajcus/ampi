@@ -1,5 +1,6 @@
 [Unit]
 Description=Disable Ethernet Controller on the USB bus
+Before=dhcpcd.service
 
 [Service]
 Type=oneshot

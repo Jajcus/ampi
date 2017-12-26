@@ -59,7 +59,7 @@
       shell: "ifdown eth0; sleep 1; ifup eth0"
       become: yes
     - name: restart wlan0
-      shell: "ifdown eth0; sleep 1; ifup eth0"
+      shell: "ifdown wlan0; sleep 1; ifup wlan0"
       become: yes
     - name: restart dhcpcd
       service: name=dhcpcd state=restarted
