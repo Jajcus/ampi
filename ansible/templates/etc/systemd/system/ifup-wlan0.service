@@ -1,0 +1,8 @@
+[Unit]
+Description=ifup wlan0
+After=hostapd.service
+
+[Service]
+Type=forking
+ExecStart=/sbin/ifup wlan0
+ExecStop=-/sbin/ifdown --force wlan0

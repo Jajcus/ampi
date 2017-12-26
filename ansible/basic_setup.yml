@@ -47,16 +47,12 @@
       become: yes
     - name: configure wifi network
       template: src=etc/wpa_supplicant/wpa_supplicant.conf dest=/etc/wpa_supplicant/wpa_supplicant.conf
-      notify:
-        - restart dhcpcd
       become: yes
-    - name: disable dhcpcd management of wpa_supplicant
-      file:
-        path: /lib/dhcpcd/dhcpcd-hooks/10-wpa_supplicant
-        state: absent
+    - name: disable dhcpcd
+      systemd:
+        name: dhcpcd.service
+        enabled: no
       become: yes
-      notify:
-        - restart wlan0
 
   handlers:
     - name: restart sshd
@@ -66,10 +62,7 @@
       shell: "ifdown eth0; sleep 1; ifup eth0"
       become: yes
     - name: restart wlan0
-      shell: "ifdown wlan0; sleep 1; killall wpa_supplicant && sleep 1 ; ifup wlan0"
-      become: yes
-    - name: restart dhcpcd
-      service: name=dhcpcd state=restarted
+      shell: "ifdown --force wlan0; sleep 1; killall wpa_supplicant && sleep 1 ; ifup wlan0"
       become: yes
 
 # vi: sw=2 sts=2 et filetype=yaml

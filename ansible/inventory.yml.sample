@@ -13,6 +13,14 @@ all:
                       psk: secret_password
                     - ssid: wifi_name2
                       psk: secret_password2
+                wifi_ap:
+                    ssid: ampi
+                    psk: ampiampi
+                    # this MUST mach channel used by networks defined in wifi_client
+                    channel: 8
+                    ipaddr: 10.11.11.11/24
+                    dhcp_range: 10.11.11.100,10.11.11.200,12h
+                    domain: example.net
                 vnc_password: another_secret_password
 
 # vi: sw=4 sts=4 et filetype=yaml

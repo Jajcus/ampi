@@ -1,0 +1,13 @@
+[Unit]
+Description=WiFi AP daemon
+Before=network.target ifup@wlan0.service ifup-wlan0.service dnsmasq.service
+Wants=dnsmasq.service
+BindsTo=sys-subsystem-net-devices-wlan0.device
+
+[Service]
+Type=forking
+ExecStartPre=/usr/local/bin/hostapd_pre
+ExecStart=/usr/sbin/hostapd -B /etc/hostapd/hostapd.conf
+
+[Install]
+WantedBy=basic.target

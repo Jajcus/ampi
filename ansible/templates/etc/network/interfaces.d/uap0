@@ -1,0 +1,7 @@
+{{ ansible_managed | comment }}
+
+allow-hotplug uap0
+
+auto uap0
+iface uap0 inet static
+	address {{ wifi_ap.ipaddr }}

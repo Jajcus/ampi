@@ -8,6 +8,14 @@
     - name: Set timezone
       tags: time
       command: timedatectl set-timezone {{ timezone | default("Europe/Warsaw") }}
+    - name: Enable persistent journal
+      file:
+        path: /var/log/journal
+        state: directory
+        owner: root
+        group: systemd-journal
+        mode: 2755
+      notify: flush journal
     - name: Update APT cache
       tags: apt
       apt:
@@ -37,12 +45,10 @@
           - gir1.2-gtk-3.0
           - libgudev-1.0-0
           - gir1.2-gudev-1.0
+          - hostapd
+          - dnsmasq
         state: latest
       notify: "restart user session"
-    - name: disable dhcpcd management of wpa_supplicant
-      file:
-        path: /lib/dhcpcd/dhcpcd-hooks/10-wpa_supplicant
-        state: absent
     - name: Add 'amp' user
       tags: amp_user
       user:
@@ -70,7 +76,7 @@
       notify:
         - reload snd
     - name: Install scripts
-      tags: scripts
+      tags: scripts,hostapd
       copy:
         src: "{{ playbook_dir }}/../scripts/{{ item }}"
         dest: /usr/local/bin/{{ item }}
@@ -78,6 +84,7 @@
       with_items:
         - bind_eth
         - unbind_eth
+        - hostapd_pre
     - name: Install the Ampi App
       tags: app
       synchronize:
@@ -94,12 +101,24 @@
           - "--exclude=*.pyc"
           - "--exclude=.*"
       notify: "restart user session"
+    - name: Make directories
+      file:
+        path: "{{ item }}"
+        state: directory
+      with_items:
+        - /etc/systemd/system/dnsmasq.service.d
     - name: Add custom systemd services
-      tags: etc, systemd
-      template: src=etc/systemd/system/{{ item }} dest=/etc/systemd/system/{{ item }}
+      tags: etc, systemd, hostapd
+      template:
+        src: etc/systemd/system/{{ item }}
+        dest: /etc/systemd/system/{{ item }}
       with_items:
         - unbind-eth.service
         - set-governor.service
+        - hostapd.service
+        - ifup-wlan0.service
+        - ifup-wlan0.timer
+        - dnsmasq.service.d/partof_hostapd.conf
     - name: Reload systemd config
       tags: systemd
       systemd: daemon_reload=yes
@@ -107,20 +126,39 @@
       tags: systemd
       systemd: enabled=no state=stopped name={{ item }}
       with_items:
+        - dhcpcd
         - ModemManager
         - bluetooth
         - hciuart
         - raspi-config
         - triggerhappy
+        - rsyslog
+    - name: Configure hostapd
+      tags: etc, hostapd
+      template:
+        src: "{{ item }}"
+        dest: "/{{ item }}"
+      with_items:
+        - etc/hostapd/hostapd.conf
+        - etc/network/interfaces.d/uap0
+        - etc/hosts
+        - etc/dnsmasq.conf
+      notify: "restart hostapd"
     - name: Set resource limits for real-time
       tags: etc
       template: src=etc/security/limits.d/audio.conf dest=/etc/security/limits.d/audio.conf
       notify: "restart user session"
-    - name: Enable/start required services
-      tags: systemd
-      systemd: enabled=yes state=started name={{ item }}
+    - name: Enable required services
+      tags: systemd, hostapd
+      systemd: enabled=yes name={{ item }}
       with_items:
         - unbind-eth.service
+        - set-governor.service
+        - hostapd.service
+    - name: Start required services
+      tags: systemd
+      systemd: state=started name={{ item }}
+      with_items:
         - set-governor.service
     - name: make amp directories
       tags: amp_user,i3,vnc
@@ -167,5 +205,9 @@
     - name: start X11 session
       systemd: name=nodm.service state=started
       listen: "restart user session"
+    - name: restart hostapd
+      systemd: name=hostapd.service state=restarted
+    - name: flush journal
+      systemd: name=systemd-journal-flush.service state=started
 
 # vi: sw=2 sts=2 et filetype=yaml

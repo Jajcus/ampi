@@ -1,0 +1,10 @@
+127.0.0.1	localhost
+::1		localhost ip6-localhost ip6-loopback
+ff02::1		ip6-allnodes
+ff02::2		ip6-allrouters
+
+127.0.1.1	{{ hostname | default(ansible_hostname) }}
+
+{% if wifi_ap.ipaddr %}
+{{ wifi_ap.ipaddr | ipaddr('address') }} {% if wifi_ap.domain %} {{ wifi_ap.hostname | default(ansible_hostname) }}.{{ wifi_ap.domain }} {% endif %} {{ wifi_ap.hostname | default(ansible_hostname) }}
+{% endif %}

@@ -1,0 +1,10 @@
+#!/bin/sh -x
+
+if [ "$(cat /sys/class/net/wlan0/operstate)" = "up" ] || ps -C wpa_supplicant ; then
+	/sbin/ifdown --force wlan0
+
+	# queue wlan0 start 
+	/bin/systemctl start ifup-wlan0.timer
+fi
+
+[ -d /sys/class/net/uap0 ] || /sbin/iw dev wlan0 interface add uap0 type __ap
