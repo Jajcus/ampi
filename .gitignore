@@ -4,4 +4,5 @@
 /ansible/ansible.cfg
 /ansible/inventory.yml
 /kernel-bin
+/tools/jsonrpc_methods.gperf_tmpl
 __pycache__

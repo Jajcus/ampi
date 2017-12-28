@@ -11,6 +11,9 @@ from gi.repository import Gtk, GObject, GLib
 from .dev import InterfaceMonitor
 from .proc import Nanny
 from .jack import JackClient
+from .guitarix import GuitarixClient
+from .status_tab import StatusTab
+from .presets_tab import PresetsTab
 
 logger = logging.getLogger("main")
 
@@ -42,11 +45,21 @@ class MainWindow(Gtk.Window):
     def __init__(self, args):
         Gtk.Window.__init__(self, title="Ampi")
         self.connect("delete-event", self.quit)
+
         self.jack_nanny = None
         self.gx_nanny = None
-        self.jack_client = None
-        self.create_widgets()
-        log_handler = TextBufferHandler(self.log_b)
+
+        self.jack_client = JackClient()
+        self.gx_client = GuitarixClient()
+
+        self.notebook = Gtk.Notebook()
+        self.add(self.notebook)
+        self.status_tab = StatusTab(self)
+        self.notebook.append_page(self.status_tab, Gtk.Label('Status'))
+        self.presets_tab = PresetsTab(self)
+        self.notebook.append_page(self.presets_tab, Gtk.Label('Presets'))
+
+        log_handler = TextBufferHandler(self.status_tab.log_b)
         log_handler.setFormatter(logging.Formatter())
         root_logger = logging.getLogger()
         root_logger.addHandler(log_handler)
@@ -66,13 +79,17 @@ class MainWindow(Gtk.Window):
         self.jack_nanny = Nanny(jack_name, jack_cmd,
                                 kill_list=["jackd", "jackdbus", "qjackctl"],
                                 callback=self.update_jackd_status)
-        self.gx_nanny = Nanny("guitarix", ["/usr/bin/guitarix"],
+
+        gx_cmd = ["/usr/bin/guitarix",
+                  "--rpchost={}".format(self.gx_client.host),
+                  "--rpcport={}".format(self.gx_client.port)]
+        self.gx_nanny = Nanny("guitarix", gx_cmd,
                                 kill_list=["guitarix"],
                                 callback=self.update_gx_status)
 
         self.update_jackd_status(False)
         self.update_gx_status(False)
-        self.jack_client = JackClient()
+        self.gx_client.add_observer(self, "all")
         self.update_iface_status(self.iface_monitor.is_present())
 
     def quit(self, widget, event):
@@ -80,76 +97,27 @@ class MainWindow(Gtk.Window):
         self.jack_nanny.stop()
         Gtk.main_quit()
 
-    def create_widgets(self):
-        self.notebook = Gtk.Notebook()
-        self.add(self.notebook)
-
-        self.status_p = Gtk.Box()
-        self.status_p.set_orientation(Gtk.Orientation.VERTICAL)
-        self.status_p.set_border_width(10)
-
-        self.iface_status_l = Gtk.Label('USB interface status: unknown')
-        self.iface_status_l.set_justify(Gtk.Justification.LEFT)
-        self.status_p.pack_start(self.iface_status_l, False, True, 2)
-
-        self.jackd_status_l = Gtk.Label('Jack server status: unknown')
-        self.jackd_status_l.set_justify(Gtk.Justification.LEFT)
-        self.status_p.pack_start(self.jackd_status_l, False, True, 2)
-
-        self.gx_status_l = Gtk.Label('Guitarix status: unknown')
-        self.gx_status_l.set_justify(Gtk.Justification.LEFT)
-        self.status_p.pack_start(self.gx_status_l, False, True, 2)
-
-        self.log_sw = Gtk.ScrolledWindow()
-        self.log_sw.set_border_width(10)
-        self.log_sw.set_hexpand(True)
-        self.log_sw.set_vexpand(True)
-
-        self.log_w = Gtk.TextView()
-        self.log_w.set_editable(False)
-        self.log_w.set_cursor_visible(False)
-        self.log_b = self.log_w.get_buffer()
-        self.log_b.connect("changed", self.log_b_changed_cb)
-
-        log_i = self.log_b.get_start_iter()
-
-        self.log_sw.add(self.log_w)
-        self.status_p.pack_start(self.log_sw, True, True, 2)
-
-        self.notebook.append_page(self.status_p, Gtk.Label('Status'))
-
     def update_iface_status(self, present):
+        self.status_tab.update_iface_status(present)
         if present:
-            self.iface_status_l.set_markup("USB interface status: "
-                    "<span foreground='#008000'>present</span>")
             GObject.timeout_add(1000, self.jack_nanny.start)
         else:
-            self.iface_status_l.set_markup("USB interface status: "
-                    "<span foreground='#800000'>absent</span>")
             self.gx_nanny.stop()
             self.jack_nanny.stop()
 
     def update_jackd_status(self, started):
+        self.status_tab.update_jackd_status(started)
         if started:
-            self.jackd_status_l.set_markup("Jack server status: "
-                    "<span foreground='#008000'>started</span>")
             GObject.timeout_add(1000, self.gx_nanny.start)
             GObject.timeout_add(1000, self.jack_client.connect)
-        else:
-            self.jackd_status_l.set_markup("Jack server status: "
-                    "<span foreground='#800000'>stopped</span>")
 
     def update_gx_status(self, started):
+        self.status_tab.update_gx_status(started)
         if started:
-            self.gx_status_l.set_markup("Guitarix status: "
-                    "<span foreground='#008000'>started</span>")
-        else:
-            self.gx_status_l.set_markup("Guitarix status: "
-                    "<span foreground='#800000'>stopped</span>")
+            GObject.timeout_add(1000, self.gx_client.connect)
 
-    def log_b_changed_cb(self, data):
-        log_w_end = self.log_w.props.vadjustment.get_upper() - self.log_w.props.vadjustment.get_page_size()
-        self.log_w.props.vadjustment.set_value(log_w_end)
+    def gx_message(self, gx_client, level, message):
+        logger.info("Guitarix: %s %s", level, message)
 
 def main():
     parser = argparse.ArgumentParser(description="Ampi UI and process management")
