@@ -168,13 +168,16 @@ class GuitarixClient:
             data = b""
             while self._socket:
                 try:
-                    data += self._socket.recv(4096)
+                    frame = self._socket.recv(4096)
                 except socket.timeout:
                     continue
                 except socket.error as err:
                     logger.warning("Cannot read from Guitarix: %s", err)
-                    self.disconnect()
-                    continue
+                    break
+                if not frame:
+                    logger.debug("EOF on guitarix connection")
+                    break
+                data += frame
                 if b"\n" not in data:
                     continue
                 lines = data.split(b"\n")
@@ -187,6 +190,7 @@ class GuitarixClient:
                                        msg_s, err)
                     self._handle_incoming_msg(msg)
                 data = lines[-1]
+            self.disconnect()
         finally:
             self._thread = None
 
