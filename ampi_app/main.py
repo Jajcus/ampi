@@ -3,6 +3,7 @@
 import os
 import logging
 import argparse
+import signal
 
 import gi
 gi.require_version('Gtk', '3.0')
@@ -56,6 +57,10 @@ class MainWindow(Gtk.Window):
         self.jack_client = JackClient()
         self.gx_client = GuitarixClient()
 
+        GLib.unix_signal_add(GLib.PRIORITY_HIGH, signal.SIGTERM, self._signal, "SIGTERM")
+        GLib.unix_signal_add(GLib.PRIORITY_HIGH, signal.SIGHUP, self._signal, "SIGHUP")
+        GLib.unix_signal_add(GLib.PRIORITY_HIGH, signal.SIGINT, self._signal, "SIGINT")
+
         self.notebook = Gtk.Notebook()
         self.add(self.notebook)
         self.status_tab = StatusTab(self)
@@ -96,9 +101,22 @@ class MainWindow(Gtk.Window):
         self.gx_client.add_observer(self, "all")
         self.update_iface_status(self.iface_monitor.is_present())
 
-    def quit(self, widget, event):
-        self.gx_nanny.stop()
-        self.jack_nanny.stop()
+    def _signal(self, signum):
+        logger.info("Exitting with signal: %r", signum)
+        self.quit()
+
+    def quit(self, *args):
+        if self.gx_nanny:
+            self.gx_nanny.let_it_stop()
+        if self.gx_client:
+            GLib.idle_add(self.gx_client.api.shutdown)
+        GLib.timeout_add(2000, self._do_quit)
+
+    def _do_quit(self):
+        if self.gx_nanny:
+            self.gx_nanny.stop()
+        if self.jack_nanny:
+            self.jack_nanny.stop()
         Gtk.main_quit()
 
     def update_iface_status(self, present):

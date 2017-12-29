@@ -132,6 +132,9 @@ class Nanny:
         if self.callback:
             self.callback(True)
 
+    def let_it_stop(self):
+        self._should_be_running = False
+
     def stop(self):
         self._should_be_running = False
         child = self._child
