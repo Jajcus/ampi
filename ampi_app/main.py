@@ -19,6 +19,9 @@ logger = logging.getLogger("main")
 
 JACK_ARGS = ["-dalsa", "-dhw:1", "-r48000", "-p64", "-n3", "-I445", "-O445"]
 
+WINDOW_HEIGHT = 464
+WINDOW_WIDTH = 792
+
 class TextBufferHandler(logging.Handler):
     """
     A logging handler class which writes logging records to a Gtk text buffer.
@@ -44,6 +47,7 @@ class MainWindow(Gtk.Window):
 
     def __init__(self, args):
         Gtk.Window.__init__(self, title="Ampi")
+        self.set_default_size(WINDOW_WIDTH, WINDOW_HEIGHT)
         self.connect("delete-event", self.quit)
 
         self.jack_nanny = None
