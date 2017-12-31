@@ -5,6 +5,6 @@ rfbport 5900
 forever
 avahi
 nolookup
-ssl SAVE_NOPROMPT
-vencrypt nodh:only
+#ssl SAVE_NOPROMPT
+#vencrypt nodh:only
 usepw
