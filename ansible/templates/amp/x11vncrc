@@ -7,3 +7,4 @@ avahi
 nolookup
 ssl SAVE_NOPROMPT
 vencrypt nodh:only
+usepw
