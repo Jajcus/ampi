@@ -117,6 +117,8 @@ class GuitarixClient:
             msg["id"] = req_id
 
         if not self._socket:
+            if name == "shutdown":
+                return
             logger.error("Cannot call Guitarix %s%r - disconnected", name, args)
             raise GuitarixClientError("Disconnected")
 
@@ -125,6 +127,8 @@ class GuitarixClient:
             logger.debug("Sending: %r", msg_s)
             self._socket.send(msg_s.encode("utf-8"))
         except socket.error as err:
+            if name == "shutdown":
+                return
             raise GuitarixClientError("Socket error: {}".format(err))
 
     def notify(self, name, *args):
