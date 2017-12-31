@@ -104,12 +104,20 @@ class JackClient:
             logger.debug("No connection rules for source port %r,%r", p_type, port)
             return
         destinations = self.source_wiring[p_type, port.name]
-        connections = [p.name for p in self.jack.get_all_connections(port)]
+        try:
+            connections = [p.name for p in self.jack.get_all_connections(port)]
+        except jack.JackError as err:
+            logger.warning("get_all_connections(%r): %s", port, err)
+            return
         logger.debug("%s: destinations: %r, connections: %r", port.name, destinations, connections)
         for conn in connections:
             if conn not in destinations:
                 logger.info("Disconnecting %r from %r", port.name, conn)
-                self.jack.disconnect(port, conn)
+                try:
+                    self.jack.disconnect(port, conn)
+                except jack.JackError as err:
+                    logger.warning("Cannot disconnect %r from %r: %s",
+                                   port.name, conn, err)
         for dest in destinations:
             if dest not in connections:
                 try:
@@ -118,7 +126,11 @@ class JackClient:
                     logger.debug("%s: %s", dest, err)
                     continue
                 logger.info("Connecting %r to %r", port.name, d_port.name)
-                self.jack.connect(port, d_port)
+                try:
+                    self.jack.connect(port, d_port)
+                except jack.JackError as err:
+                    logger.warning("Cannot connect %r to %r: %s",
+                                   port.name, d_port.name, err)
 
     def _connect_sink(self, port):
         if port.is_audio:
@@ -132,12 +144,20 @@ class JackClient:
             logger.debug("No connection rules for sink port %r,%r", p_type, port)
             return
         sources = self.sink_wiring[p_type, port.name]
-        connections = [p.name for p in self.jack.get_all_connections(port)]
+        try:
+            connections = [p.name for p in self.jack.get_all_connections(port)]
+        except jack.JackError as err:
+            logger.warning("get_all_connections(%r): %s", port, err)
+            return
         logger.debug("%s: sources: %r, connections: %r", port.name, sources, connections)
         for conn in connections:
             if conn not in sources:
                 logger.info("Disconnecting %r from %r", conn, port.name)
-                self.jack.disconnect(conn, port)
+                try:
+                    self.jack.disconnect(conn, port)
+                except jack.JackError as err:
+                    logger.warning("Cannot disconnect %r from %r: %s",
+                                   conn, port.name, err)
         for src in sources:
             if src not in connections:
                 try:
@@ -146,7 +166,11 @@ class JackClient:
                     logger.debug("%s: %s", src, err)
                     continue
                 logger.info("Connecting %r to %r", src, port.name)
-                self.jack.connect(src, port)
+                try:
+                    self.jack.connect(src, port)
+                except jack.JackError as err:
+                    logger.warning("Cannot connect %r to %r: %s",
+                                   src, port.name, err)
 
     def apply_wiring(self):
         if not self.jack:
