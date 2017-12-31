@@ -63,9 +63,13 @@ class GuitarixClient:
                 return
             elif self._socket or self._thread:
                 self._disconnect()
-            sock = socket.socket()
-            sock.settimeout(TIMEOUT)
-            sock.connect((self.host, self.port))
+            try:
+                sock = socket.socket()
+                sock.settimeout(TIMEOUT)
+                sock.connect((self.host, self.port))
+            except socket.error as err:
+                logger.error("Guitarix connection error: %s", err)
+                return True
             self._socket = sock
             self._thread = threading.Thread(name="Guitarix client",
                                            target=self._run,

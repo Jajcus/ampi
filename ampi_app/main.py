@@ -7,7 +7,7 @@ import signal
 
 import gi
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, GObject, GLib
+from gi.repository import Gtk, GLib
 
 from .dev import InterfaceMonitor
 from .proc import Nanny
@@ -55,6 +55,7 @@ class MainWindow(Gtk.Window):
         self.gx_nanny = None
 
         self.jack_client = JackClient()
+        self._gx_start_id = None
         self.gx_client = GuitarixClient()
 
         GLib.unix_signal_add(GLib.PRIORITY_HIGH, signal.SIGTERM, self._signal, "SIGTERM")
@@ -122,7 +123,7 @@ class MainWindow(Gtk.Window):
     def update_iface_status(self, present):
         self.status_tab.update_iface_status(present)
         if present:
-            GObject.timeout_add(1000, self.jack_nanny.start)
+            GLib.timeout_add(1000, self.jack_nanny.start)
         else:
             self.gx_nanny.stop()
             self.jack_nanny.stop()
@@ -130,13 +131,23 @@ class MainWindow(Gtk.Window):
     def update_jackd_status(self, started):
         self.status_tab.update_jackd_status(started)
         if started:
-            GObject.timeout_add(1000, self.gx_nanny.start)
-            GObject.timeout_add(1000, self.jack_client.connect)
+            GLib.timeout_add(1000, self.gx_nanny.start)
+            GLib.timeout_add(1000, self.jack_client.connect)
 
     def update_gx_status(self, started):
         self.status_tab.update_gx_status(started)
         if started:
-            GObject.timeout_add(1000, self.gx_client.connect)
+            self._gx_start_id = GLib.timeout_add(1000, self.gx_client.connect)
+        else:
+            if self._gx_start_id is not None:
+                GLib.source_remove(self._gx_start_id)
+                self._gx_start_id = None
+
+    def gx_connected(self, gx_client):
+        if self._gx_start_id is not None:
+            # if connected, then the connect function returned None
+            # and thhis has already been removed from glib
+            self._gx_start_id = None
 
     def gx_message(self, gx_client, level, message):
         logger.info("Guitarix: %s %s", level, message)
