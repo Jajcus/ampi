@@ -88,18 +88,19 @@ class MainWindow(Gtk.Window):
 
         self.jack_nanny = Nanny(jack_name, jack_cmd,
                                 kill_list=["jackd", "jackdbus", "qjackctl"],
-                                callback=self.update_jackd_status)
+                                callback=self.update_jackd_proc_status)
 
         gx_cmd = ["/usr/bin/guitarix",
                   "--rpchost={}".format(self.gx_client.host),
                   "--rpcport={}".format(self.gx_client.port)]
         self.gx_nanny = Nanny("guitarix", gx_cmd,
                                 kill_list=["guitarix"],
-                                callback=self.update_gx_status)
+                                callback=self.update_gx_proc_status)
 
-        self.update_jackd_status(False)
-        self.update_gx_status(False)
+        self.update_jackd_proc_status(False)
+        self.update_gx_proc_status(False)
         self.gx_client.add_observer(self, "all")
+        self.gx_client.add_observer(self.status_tab, "state")
         self.update_iface_status(self.iface_monitor.is_present())
 
     def _signal(self, signum):
@@ -128,14 +129,14 @@ class MainWindow(Gtk.Window):
             self.gx_nanny.stop()
             self.jack_nanny.stop()
 
-    def update_jackd_status(self, started):
-        self.status_tab.update_jackd_status(started)
+    def update_jackd_proc_status(self, started):
+        self.status_tab.update_jackd_proc_status(started)
         if started:
             GLib.timeout_add(1000, self.gx_nanny.start)
             GLib.timeout_add(1000, self.jack_client.connect)
 
-    def update_gx_status(self, started):
-        self.status_tab.update_gx_status(started)
+    def update_gx_proc_status(self, started):
+        self.status_tab.update_gx_proc_status(started)
         if started:
             self._gx_start_id = GLib.timeout_add(1000, self.gx_client.connect)
         else:

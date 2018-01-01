@@ -3,6 +3,7 @@
 import logging
 from collections import defaultdict
 import jack
+import time
 
 from gi.repository import GObject
 
@@ -25,14 +26,15 @@ WIRING = [
         ]
 
 class JackClient:
-    def __init__(self, status_callback=None):
-        self.status_callback = status_callback
-        if self.status_callback:
-            self.status_callback("disconnected")
+    def __init__(self):
         self.jack = None
         self.wiring = None
         self.source_wiring = {}
         self.sink_wiring = {}
+        self.xruns = 0
+        self.skipped_xruns = 0
+        self.last_xrun = 0
+        self.last_xrun_log = 0
         self._load_wiring(WIRING[0])
 
     def _load_wiring(self, wiring):
@@ -67,6 +69,7 @@ class JackClient:
             return
         try:
             self.jack.set_port_registration_callback(self._port_registered_cb)
+            self.jack.set_xrun_callback(self._xrun_cb)
             logger.info("Activating Jack...")
             self.jack.activate()
         except jack.JackError as err:
@@ -74,13 +77,28 @@ class JackClient:
             self.jack.close()
             self.jack = None
             return
-        if self.status_callback:
-            self.status_callback("connected")
         logger.info("Jack connection ready.")
         self.apply_wiring()
 
     def _port_registered_cb(self, port, registered):
         GObject.timeout_add(10, self._port_registered, port, registered)
+
+    def _xrun_cb(self, delayed):
+        self.xruns += 1
+        now = time.monotonic()
+        if self.last_xrun_log:
+            if not self.last_xrun_log or now - self.last_xrun_log > 2:
+                if self.skipped_xruns > 0:
+                    logger.warning("%i xruns!", self.skipped_xruns + 1)
+                else:
+                    logger.warning("xruns!")
+                self.skipped_xruns = 0
+                self.last_xrun_log = now
+            else:
+                self.skipped_xruns += 1
+        else:
+            logger.warning("xrun!")
+        self.last_xrun = now
 
     def _port_registered(self, port, registered):
         if not registered:
@@ -191,3 +209,33 @@ class JackClient:
             if wiring[0] == name:
                 return self._load_wiring(wiring)
         raise KeyError(name)
+
+    def get_status_string(self):
+        if not self.jack:
+            return "<span foreground='#800000'>disconnected</span>"
+        status_s = "<span foreground='#008000'>connected</span>, "
+        try:
+            load = self.jack.cpu_load()
+            if load <= 80:
+                color = "#008000"
+            else:
+                color = "#800000"
+            status_s += "<span foreground='{}'>{:3.0f}% CPU load</span>, ".format(color, load)
+        except jack.JackError as err:
+            logger.warning("cpu_load: %s", err)
+            status_s += "unknown CPU load, "
+        if not self.xruns:
+            color = "#008000"
+            xrun_s = "0 xruns"
+        else:
+            now = time.monotonic()
+            since_last_xrun = int(now - self.last_xrun)
+            if since_last_xrun < 120:
+                delta_s = "{:3d}s".format(since_last_xrun)
+                color = "#800000"
+            else:
+                delta_s = "{:d}m".format(since_last_xrun // 60)
+                color = "#008000"
+            xrun_s = "{} xruns (last {} ago)".format(self.xruns, delta_s)
+        status_s += "<span foreground='{}'>{}</span> ".format(color, xrun_s)
+        return status_s
