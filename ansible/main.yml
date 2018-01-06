@@ -49,6 +49,13 @@
           - dnsmasq
         state: latest
       notify: "restart user session"
+    - name: Uninstall unnecessary packages
+      tags: apt
+      apt:
+        name:
+          - fake-hwclock
+        state: absent
+        purge: yes
     - name: Add 'amp' user
       tags: amp_user
       user:
@@ -107,6 +114,7 @@
         state: directory
       with_items:
         - /etc/systemd/system/dnsmasq.service.d
+        - /etc/systemd/system/systemd-journald.service.d
     - name: Add custom systemd services
       tags: etc, systemd, hostapd
       template:
@@ -119,6 +127,14 @@
         - ifup-wlan0.service
         - ifup-wlan0.timer
         - dnsmasq.service.d/partof_hostapd.conf
+        - systemd-journald.service.d/wait_for_rtc.conf
+    - name: Set up udev rules
+      tags: etc
+      template:
+        src: etc/udev/rules.d/{{ item }}
+        dest: /etc/udev/rules.d/{{ item }}
+      with_items:
+        - 01-rtc.rules
     - name: Reload systemd config
       tags: systemd
       systemd: daemon_reload=yes

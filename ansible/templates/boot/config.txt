@@ -42,15 +42,10 @@ hdmi_drive=2
 #uncomment to overclock the arm. 700 MHz is the default.
 #arm_freq=800
 
-# Uncomment some or all of these to enable the optional hardware interfaces
-#dtparam=i2c_arm=on
-#dtparam=i2s=on
-#dtparam=spi=on
+dtparam=i2c=on
 
 # Uncomment this to enable the lirc-rpi module
 dtoverlay=pi3-disable-bt
+dtoverlay=i2c-rtc,pcf8563
 
 # Additional overlays and parameters are documented /boot/overlays/README
-
-# Enable audio (loads snd_bcm2835)
-#dtparam=audio=on
