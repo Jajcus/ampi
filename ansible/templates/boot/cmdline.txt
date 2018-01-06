@@ -1,1 +1,1 @@
-dwc_otg.fiq_fsm_enable=0 dwc_otg.fiq_enable=0 dwc_otg.nak_holdoff=0 dwc_otg.lpm_enable=0 console=serial0,115200 console=tty1 root=PARTUUID={{root_partuuid}} rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait threadirqs
+dwc_otg.lpm_enable=0 console=serial0,115200 console=tty1 root=PARTUUID={{root_partuuid}} rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait threadirqs
