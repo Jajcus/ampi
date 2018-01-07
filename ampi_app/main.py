@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import configparser
 import os
 import logging
 import argparse
@@ -47,7 +48,13 @@ class TextBufferHandler(logging.Handler):
 class MainWindow(Gtk.Window):
 
     def __init__(self, args):
+        self.config = configparser.ConfigParser(interpolation=configparser.ExtendedInterpolation())
+        pkg_dir = os.path.dirname(__file__)
+        conf_dir = os.path.expanduser("~/.config/ampi_app")
+        self.config.read([os.path.join(pkg_dir, "config"), os.path.join(conf_dir, "config")],
+                         encoding='utf-8')
         Gtk.Window.__init__(self, title="Ampi")
+
         self.set_default_size(WINDOW_WIDTH, WINDOW_HEIGHT)
         self.connect("delete-event", self.quit)
 
@@ -56,7 +63,8 @@ class MainWindow(Gtk.Window):
 
         self.jack_client = JackClient()
         self._gx_start_id = None
-        self.gx_client = GuitarixClient()
+        self.gx_client = GuitarixClient(self.config["Guitarix"]["rpc_host"],
+                                        int(self.config["Guitarix"]["rpc_port"]))
 
         GLib.unix_signal_add(GLib.PRIORITY_HIGH, signal.SIGTERM, self._signal, "SIGTERM")
         GLib.unix_signal_add(GLib.PRIORITY_HIGH, signal.SIGHUP, self._signal, "SIGHUP")
@@ -79,20 +87,14 @@ class MainWindow(Gtk.Window):
             root_logger.setLevel(logging.INFO)
         self.iface_monitor = InterfaceMonitor(self.update_iface_status)
 
-        if os.path.exists("/usr/bin/jackd"):
-            jack_name = "jackd"
-            jack_cmd = ["/usr/bin/jackd"] + JACK_ARGS
-        else:
-            jack_name = "qjackctl"
-            jack_cmd = ["/usr/bin/qjackctl"]
+        jack_cmd = self.config["Jack"]["cmdline"].split()
+        jack_name = jack_cmd[0].rsplit("/", 1)[-1]
 
         self.jack_nanny = Nanny(jack_name, jack_cmd,
                                 kill_list=["jackd", "jackdbus", "qjackctl"],
                                 callback=self.update_jackd_proc_status)
 
-        gx_cmd = ["/usr/bin/guitarix",
-                  "--rpchost={}".format(self.gx_client.host),
-                  "--rpcport={}".format(self.gx_client.port)]
+        gx_cmd = self.config["Guitarix"]["cmdline"].split()
         self.gx_nanny = Nanny("guitarix", gx_cmd,
                                 kill_list=["guitarix"],
                                 callback=self.update_gx_proc_status)
