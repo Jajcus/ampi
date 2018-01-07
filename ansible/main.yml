@@ -47,6 +47,7 @@
           - gir1.2-gudev-1.0
           - hostapd
           - dnsmasq
+          - policykit-1
         state: latest
       notify: "restart user session"
     - name: Uninstall unnecessary packages
