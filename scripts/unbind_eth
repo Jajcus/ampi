@@ -16,6 +16,7 @@ if [ "$(cat /sys/class/net/eth0/carrier)" = "1" ] ; then
 	echo "eth0 carrier detected"
 	RESULT=1
 else
+	/bin/systemctl stop ifup@eth0.service
 	echo 1-1.1:1.0 > /sys/bus/usb/drivers/smsc95xx/unbind
 	RESULT=0
 fi
