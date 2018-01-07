@@ -177,7 +177,7 @@
       with_items:
         - set-governor.service
     - name: make amp directories
-      tags: amp_user,i3,vnc
+      tags: amp_user,i3,vnc,guitarix
       file:
         name: "{{ item }}"
         owner: amp
@@ -185,6 +185,9 @@
         state: directory
       with_items:
         - /home/amp/.config
+        - /home/amp/.config/ampi_app
+        - /home/amp/.config/guitarix
+        - /home/amp/.config/guitarix/banks
         - /home/amp/.config/i3
         - /home/amp/.config/i3status
         - /home/amp/.vnc
@@ -208,18 +211,6 @@
       become: yes
       become_user: amp
       command: x11vnc -storepasswd ampik ~/.vnc/passwd
-    - name: make guitarix directories
-      tags: amp_user,guitarix
-      file:
-        name: "{{ item }}"
-        owner: amp
-        group: amp
-        state: directory
-      with_items:
-        - /home/amp/.config
-        - /home/amp/.config/guitarix
-        - /home/amp/.config/guitarix/banks
-        - /home/amp/.vnc
     - name: configure guitarix
       tags: amp_user,guitarix
       template:
