@@ -119,10 +119,14 @@ class Nanny:
                 self._procs.killall(name)
 
         logger.info("Starting: %s", " ".join(self.command))
-        self._child = subprocess.Popen(self.command,
-                                       stdin=open("/dev/null", "rb"),
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.STDOUT)
+        try:
+            self._child = subprocess.Popen(self.command,
+                                           stdin=open("/dev/null", "rb"),
+                                           stdout=subprocess.PIPE,
+                                           stderr=subprocess.STDOUT)
+        except OSError as err:
+            logger.error("Could not start %r: %s", " ".join(self.command), err)
+            return
         self._thread = threading.Thread(target=self.process_output,
                                         args=(self._child,),
                                         name="{} nanny".format(self.name),
