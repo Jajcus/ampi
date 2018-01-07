@@ -16,6 +16,7 @@ from .jack import JackClient
 from .guitarix import GuitarixClient
 from .status_tab import StatusTab
 from .presets_tab import PresetsTab
+from .system_tab import SystemTab
 
 logger = logging.getLogger("main")
 
@@ -98,6 +99,8 @@ class MainWindow(Gtk.Window):
         self.notebook.append_page(self.status_tab, Gtk.Label('Status'))
         self.presets_tab = PresetsTab(self)
         self.notebook.append_page(self.presets_tab, Gtk.Label('Presets'))
+        self.system_tab = SystemTab(self)
+        self.notebook.append_page(self.system_tab, Gtk.Label('System'))
 
         log_handler = TextBufferHandler(self.status_tab.log_b)
         log_handler.setFormatter(logging.Formatter())

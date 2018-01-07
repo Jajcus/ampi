@@ -19,4 +19,8 @@ cmdline=/usr/bin/guitarix --rpchost=${rpc_host} --rpcport=${rpc_port}
 safe=Ampi,empty
 default=Ampi,clean
 
+[System]
+Shutdown=/bin/systemctl poweroff
+Reboot=/bin/systemctl reboot
+
 # vi: ft=desktop
