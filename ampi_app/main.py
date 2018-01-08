@@ -19,8 +19,6 @@ from .presets_tab import PresetsTab
 
 logger = logging.getLogger("main")
 
-JACK_ARGS = ["-dalsa", "-dhw:1", "-r48000", "-p128", "-n3", "-I445", "-O445"]
-
 WINDOW_HEIGHT = 464
 WINDOW_WIDTH = 792
 
