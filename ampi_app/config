@@ -3,6 +3,7 @@ width=792
 height=464
 
 [Jack]
+wait_for_device=true
 device=hw:1
 rate=48000
 frames=128

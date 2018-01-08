@@ -126,6 +126,8 @@ class MainWindow(Gtk.Window):
         self.gx_client.add_observer(self, "all")
         self.gx_client.add_observer(self.status_tab, "state")
         self.update_iface_status(self.iface_monitor.is_present())
+        if not self.config["Jack"].getboolean("wait_for_device"):
+            GLib.timeout_add(1000, self.jack_nanny.start)
 
     def _signal(self, signum):
         logger.info("Exitting with signal: %r", signum)
