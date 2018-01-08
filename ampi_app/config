@@ -10,7 +10,7 @@ frames=128
 periods=3
 io_latency_in=445
 io_latency_out=445
-cmdline=/usr/bin/jackd -dalsa -d${device} -r${rate} -p${frames} -n${periods} -I${io_latency_in} -O${io_latency_out}
+cmdline=/usr/bin/jackd --realtime-priority 60 -dalsa -d${device} -r${rate} -p${frames} -n${periods} -I${io_latency_in} -O${io_latency_out}
 
 [Guitarix]
 rpc_host=127.0.0.1
