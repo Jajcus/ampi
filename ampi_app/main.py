@@ -19,8 +19,6 @@ from .presets_tab import PresetsTab
 
 logger = logging.getLogger("main")
 
-WINDOW_HEIGHT = 464
-WINDOW_WIDTH = 792
 
 class TextBufferHandler(logging.Handler):
     """
@@ -53,7 +51,8 @@ class MainWindow(Gtk.Window):
                          encoding='utf-8')
         Gtk.Window.__init__(self, title="Ampi")
 
-        self.set_default_size(WINDOW_WIDTH, WINDOW_HEIGHT)
+        self.set_default_size(self.config["UI"].getint("width"),
+                              self.config["UI"].getint("height"))
         self.connect("delete-event", self.quit)
 
         self.jack_nanny = None

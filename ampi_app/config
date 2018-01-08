@@ -1,3 +1,6 @@
+[UI]
+width=792
+height=464
 
 [Jack]
 device=hw:1
