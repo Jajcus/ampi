@@ -19,6 +19,13 @@ from .presets_tab import PresetsTab
 
 logger = logging.getLogger("main")
 
+LOG_COLORS = [
+        (logging.DEBUG, "#505050"),
+        (logging.INFO, "#101010"),
+        (logging.WARNING, "#c06000"),
+        (logging.ERROR, "#c00000"),
+        (logging.CRITICAL, "#ff0000"),
+        ]
 
 class TextBufferHandler(logging.Handler):
     """
@@ -27,6 +34,22 @@ class TextBufferHandler(logging.Handler):
     def __init__(self, text_buffer):
         logging.Handler.__init__(self)
         self.buffer = text_buffer
+        self.text_tags = {}
+
+    def _get_tag(self, level):
+        tag = self.text_tags.get(level)
+        if tag:
+            return tag
+        for i in range(len(LOG_COLORS) - 1):
+            if level < LOG_COLORS[i + 1][0]:
+                color = LOG_COLORS[i][1]
+                break
+        else:
+            color = LOG_COLORS[-1][1]
+        tag = self.buffer.create_tag("log_level_{}".format(level),
+                                     foreground=color)
+        self.text_tags[level] = tag
+        return tag
 
     def emit(self, record):
         """
@@ -34,9 +57,11 @@ class TextBufferHandler(logging.Handler):
         """
         try:
             msg = self.format(record)
+            level = record.levelno
             def add_line():
+                tag = self._get_tag(level)
                 buf_iter = self.buffer.get_end_iter()
-                self.buffer.insert(buf_iter, msg + "\n")
+                self.buffer.insert_with_tags(buf_iter, msg + "\n", tag)
             GLib.idle_add(add_line)
         except Exception:
             self.handleError(record)
