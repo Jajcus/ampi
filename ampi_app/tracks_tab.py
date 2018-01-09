@@ -150,6 +150,7 @@ class TracksTab(Gtk.Box):
 
     def _play_clicked(self, button):
         self.playing = not self.playing
+        logger.debug("Play clicked, now playing: %r", self.playing)
         self._player_command("pause")
 
     def _stop_clicked(self, button):
@@ -166,9 +167,12 @@ class TracksTab(Gtk.Box):
 
     def _mplayer_output(self, data):
         if b"=====  PAUSE  =====" in data:
+            logger.debug("Got %r from mplayer, paused", data)
             self.playing = False
-        elif b"\n\n" in data or not data.strip():
+        elif self.playing and (b"\n\n" in data or not data.strip()):
             # EOF?
+            logger.debug("Got %r from mplayer, stopped?", data)
+            self.playing = False
             GLib.idle_add(self._load_track)
 
     def update_tracklist(self):
