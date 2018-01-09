@@ -16,6 +16,7 @@ from .jack import JackClient
 from .guitarix import GuitarixClient
 from .status_tab import StatusTab
 from .presets_tab import PresetsTab
+from .tracks_tab import TracksTab
 from .system_tab import SystemTab
 
 logger = logging.getLogger("main")
@@ -99,8 +100,12 @@ class MainWindow(Gtk.Window):
         self.notebook.append_page(self.status_tab, Gtk.Label('Status'))
         self.presets_tab = PresetsTab(self)
         self.notebook.append_page(self.presets_tab, Gtk.Label('Presets'))
+        self.tracks_tab = TracksTab(self)
+        self.notebook.append_page(self.tracks_tab, Gtk.Label('Tracks'))
         self.system_tab = SystemTab(self)
         self.notebook.append_page(self.system_tab, Gtk.Label('System'))
+        self.notebook.show_all()
+        self.notebook.set_current_page(0)
 
         log_handler = TextBufferHandler(self.status_tab.log_b)
         log_handler.setFormatter(logging.Formatter())
@@ -113,7 +118,7 @@ class MainWindow(Gtk.Window):
         self.iface_monitor = InterfaceMonitor(self.update_iface_status)
 
         jack_cmd = self.config["Jack"]["cmdline"].split()
-        jack_name = jack_cmd[0].rsplit("/", 1)[-1]
+        jack_name = os.path.basename(jack_cmd[0])
 
         self.jack_nanny = Nanny(jack_name, jack_cmd,
                                 kill_list=["jackd", "jackdbus", "qjackctl"],
@@ -141,6 +146,8 @@ class MainWindow(Gtk.Window):
             self.gx_nanny.let_it_stop()
         if self.gx_client:
             GLib.idle_add(self.gx_client.api.shutdown)
+        if self.tracks_tab:
+            self.tracks_tab.stop_player()
         GLib.timeout_add(2000, self._do_quit)
 
     def _do_quit(self):
@@ -160,6 +167,7 @@ class MainWindow(Gtk.Window):
 
     def update_jackd_proc_status(self, started):
         self.status_tab.update_jackd_proc_status(started)
+        self.tracks_tab.update_jackd_proc_status(started)
         if started:
             GLib.timeout_add(1000, self.gx_nanny.start)
             GLib.timeout_add(1000, self.jack_client.connect)

@@ -23,4 +23,7 @@ default=Ampi,clean
 Shutdown=/bin/systemctl poweroff
 Reboot=/bin/systemctl reboot
 
+[Tracks]
+player_cmdline=/usr/bin/mplayer -novideo -volume 0 -softvol -af scaletempo -ao jack:noconnect:name=ampi_mplayer:noautostart -input nodefault-bindings -noconfig all -nojoystick -nolirc -slave -idle
+
 # vi: ft=desktop

@@ -16,12 +16,16 @@ WIRING = [
             ("audio", "gx_head_fx:out_0", "system:playback_2"),
             ("audio", "gx_head_fx:out_1", "system:playback_2"),
             ("audio", None, "system:playback_1"),
+            ("audio", "ampi_mplayer:out_0", "system:playback_2"),
+            ("audio", "ampi_mplayer:out_1", "system:playback_2")
             ]),
         ("Stereo", [
             ("audio", "system:capture_1", "gx_head_amp:in_0"),
             ("audio", "system:capture_2", None),
             ("audio", "gx_head_fx:out_0", "system:playback_1"),
             ("audio", "gx_head_fx:out_1", "system:playback_2"),
+            ("audio", "ampi_mplayer:out_0", "system:playback_1"),
+            ("audio", "ampi_mplayer:out_1", "system:playback_2")
             ]),
         ]
 
