@@ -152,7 +152,7 @@ mode "resize" {
 bindsym $mod+r mode "resize"
 
 exec /usr/bin/x11vnc
-exec /usr/bin/python3 -m ampi_app.main --debug
+exec /usr/bin/python3 -m ampi_app.main
 
 # Run Guitarix on workspace 2
 assign [class="^Guitarix"] 2:Gtrx
