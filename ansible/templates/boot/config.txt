@@ -39,8 +39,12 @@ hdmi_drive=2
 # uncomment for composite PAL
 #sdtv_mode=2
 
-#uncomment to overclock the arm. 700 MHz is the default.
-#arm_freq=800
+arm_freq=1350
+core_freq=300
+over_voltage=4
+boot_delay=1
+
+gpu_mem=16
 
 dtparam=i2c=on
 
