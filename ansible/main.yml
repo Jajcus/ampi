@@ -48,6 +48,7 @@
           - hostapd
           - dnsmasq
           - policykit-1
+          - mplayer
         state: latest
       notify: "restart user session"
     - name: Uninstall unnecessary packages
