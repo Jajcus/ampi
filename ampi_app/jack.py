@@ -4,6 +4,7 @@ import logging
 from collections import defaultdict
 import jack
 import time
+from functools import partial
 
 from gi.repository import GObject
 
@@ -39,6 +40,7 @@ class JackClient:
         self.skipped_xruns = 0
         self.last_xrun = 0
         self.last_xrun_log = 0
+        self.in_shutdown = False
         self._load_wiring(WIRING[0])
 
     def _load_wiring(self, wiring):
@@ -72,6 +74,7 @@ class JackClient:
             logger.error("Cannot connect to Jack: %s", err)
             return
         try:
+            self.jack.set_shutdown_callback(self._shutdown_cb)
             self.jack.set_port_registration_callback(self._port_registered_cb)
             self.jack.set_xrun_callback(self._xrun_cb)
             logger.info("Activating Jack...")
@@ -104,7 +107,22 @@ class JackClient:
             logger.warning("xrun!")
         self.last_xrun = now
 
+    def _shutdown_cb(self, status, reason):
+        self.in_shutdown = True
+        GObject.idle_add(partial(logger.warning, "Jack shutdown: %s", reason))
+        GObject.idle_add(self._shutdown)
+
+    def _shutdown(self):
+        if self.jack and self.in_shutdown:
+            try:
+                self.jack.close()
+            finally:
+                self.jack = None
+                self.in_shutdown = False
+
     def _port_registered(self, port, registered):
+        if not self.jack or self.in_shutdown:
+            return
         if not registered:
             logger.debug("Jack port %r unregistered", port.name)
             return
@@ -195,7 +213,7 @@ class JackClient:
                                    src, port.name, err)
 
     def apply_wiring(self):
-        if not self.jack:
+        if not self.jack or self.in_shutdown:
             return
         logger.info("Connecting Jack wires...")
         logger.debug("source_wiring: %r", self.source_wiring)
@@ -215,7 +233,7 @@ class JackClient:
         raise KeyError(name)
 
     def get_status_string(self):
-        if not self.jack:
+        if not self.jack or self.in_shutdown:
             return "<span foreground='#800000'>disconnected</span>"
         status_s = "<span foreground='#008000'>connected</span>, "
         try:
