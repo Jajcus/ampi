@@ -155,7 +155,7 @@ exec /usr/bin/x11vnc
 exec /usr/bin/python3 -m ampi_app.main --debug
 
 # Run Guitarix on workspace 2
-assign [class="^Guitarix"] 2:Guitarix
+assign [class="^Guitarix"] 2:Gtrx
 
 # Start i3bar to display a workspace bar (plus the system information i3status
 # finds out, if available)
