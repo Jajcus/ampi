@@ -49,6 +49,7 @@
           - dnsmasq
           - policykit-1
           - mplayer
+          - xinput-calibrator
         state: latest
       notify: "restart user session"
     - name: Uninstall unnecessary packages
