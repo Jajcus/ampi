@@ -118,6 +118,7 @@
       with_items:
         - /etc/systemd/system/dnsmasq.service.d
         - /etc/systemd/system/systemd-journald.service.d
+        - /etc/X11/xorg.conf.d
     - name: Add custom systemd services
       tags: etc, systemd, hostapd
       template:
@@ -194,6 +195,13 @@
         - /home/amp/.config/i3
         - /home/amp/.config/i3status
         - /home/amp/.vnc
+    - name: prepare touchscreen calibration data placeholder
+      tags: amp_user,xorg
+      file:
+        name: /etc/X11/xorg.conf.d/touchscreen_calibration.conf
+        owner: amp
+        group: amp
+        state: touch
     - name: configure i3
       tags: amp_user,i3
       template: src=amp/i3/config dest=/home/amp/.config/i3/config owner=amp group=amp

@@ -22,7 +22,7 @@ default=Ampi,clean
 [System]
 Shutdown=/bin/systemctl poweroff
 Reboot=/bin/systemctl reboot
-Calibrate Touchscreen=/usr/bin/xinput_calibrator
+Calibrate Touchscreen=/usr/bin/xinput_calibrator --output-filename /etc/X11/xorg.conf.d/touchscreen_calibration.conf
 
 [Tracks]
 player_cmdline=/usr/bin/mplayer -novideo -volume 0 -softvol -af scaletempo -ao jack:noconnect:name=ampi_mplayer:noautostart -input nodefault-bindings -noconfig all -nojoystick -nolirc -slave -idle
