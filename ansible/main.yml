@@ -163,7 +163,8 @@
         - etc/network/interfaces.d/uap0
         - etc/hosts
         - etc/dnsmasq.conf
-      notify: "restart hostapd"
+      #causes system crash
+      #notify: "restart hostapd"
     - name: Set resource limits for real-time
       tags: etc
       template: src=etc/security/limits.d/audio.conf dest=/etc/security/limits.d/audio.conf
