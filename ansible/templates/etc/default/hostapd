@@ -1,0 +1,4 @@
+{{ ansible_managed | comment }}
+
+# required for package update not to try to mask our unit
+DAEMON_CONF="/etc/hostapd/hostapd.conf"

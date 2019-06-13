@@ -119,6 +119,11 @@
         - /etc/systemd/system/dnsmasq.service.d
         - /etc/systemd/system/systemd-journald.service.d
         - /etc/X11/xorg.conf.d
+    - name: Install /etc/default/hostapd
+      tags: etc, hostapd
+      template:
+        src: etc/default/hostapd
+        dest: /etc/default/hostapd
     - name: Add custom systemd services
       tags: etc, systemd, hostapd
       template:
